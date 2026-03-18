@@ -99,10 +99,10 @@ export default function Home() {
             </span>
           </div>
           <nav className="flex items-center gap-0 border border-border">
-            <Link href="#architecture" className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] flex items-center tracking-wide border-r border-border">
+            <Link href="#architecture" className="hidden sm:flex px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] items-center tracking-wide border-r border-border">
               Architecture
             </Link>
-            <Link href="/playground/chat" className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] flex items-center tracking-wide border-r border-border">
+            <Link href="/playground/chat" className="hidden sm:flex px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] items-center tracking-wide border-r border-border">
               AI Chat Demo
             </Link>
             <Link href="/playground" className="px-4 py-2 text-xs font-medium bg-foreground text-background min-h-[36px] flex items-center tracking-wide">
@@ -131,15 +131,12 @@ export default function Home() {
               PrivacyLayer strips all personal information before it reaches any AI model.
               Everything runs in your browser. Nothing is sent to our servers. Nothing.
             </p>
-            <div className="flex items-center gap-0 border border-border w-fit mt-6">
-              <Link href="/playground" className="px-5 py-2.5 text-sm font-semibold bg-foreground text-background hover:bg-foreground/90 transition-opacity min-h-[44px] flex items-center">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-0 sm:border sm:border-border w-full sm:w-fit mt-6">
+              <Link href="/playground" className="px-5 py-3 text-sm font-semibold bg-foreground text-background hover:bg-foreground/90 transition-opacity min-h-[44px] flex items-center justify-center border border-border sm:border-0">
                 Try the playground
               </Link>
-              <Link href="/playground/chat" className="px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border-l border-border min-h-[44px] flex items-center">
+              <Link href="/playground/chat" className="px-5 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[44px] flex items-center justify-center border border-border sm:border-0 sm:border-l">
                 AI chat demo
-              </Link>
-              <Link href="#architecture" className="px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors border-l border-border min-h-[44px] flex items-center">
-                How it works
               </Link>
             </div>
           </div>
@@ -268,21 +265,21 @@ export default function Home() {
             What we detect and protect
           </p>
           <div className="border border-border">
-            <div className="grid grid-cols-[1fr_auto_auto] px-4 py-2 border-b border-border bg-muted/30">
+            <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_auto_auto] px-4 py-2 border-b border-border bg-muted/30">
               <span className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">Personal data type</span>
-              <span className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider w-36 text-center">Replaced with</span>
-              <span className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider w-40 text-right">Example</span>
+              <span className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider text-right sm:w-36 sm:text-center">Token</span>
+              <span className="hidden sm:block text-[11px] font-mono text-muted-foreground uppercase tracking-wider w-40 text-right">Example</span>
             </div>
             {CATEGORIES.map(([label, token, example], i) => (
               <div
                 key={label}
-                className={`grid grid-cols-[1fr_auto_auto] px-4 py-3 ${
+                className={`grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_auto_auto] px-4 py-3 ${
                   i < CATEGORIES.length - 1 ? "border-b border-border" : ""
                 }`}
               >
                 <span className="text-sm">{label}</span>
-                <span className="font-mono text-xs text-muted-foreground w-36 text-center">{token}</span>
-                <span className="font-mono text-xs text-muted-foreground w-40 text-right">{example}</span>
+                <span className="font-mono text-xs text-muted-foreground text-right sm:w-36 sm:text-center">{token}</span>
+                <span className="hidden sm:block font-mono text-xs text-muted-foreground w-40 text-right">{example}</span>
               </div>
             ))}
           </div>
