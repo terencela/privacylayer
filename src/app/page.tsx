@@ -22,15 +22,15 @@ const PIPELINE = [
 const STEPS = [
   {
     num: "01", title: "Upload",
-    desc: "Drop in a PDF, snap a photo of a letter, or paste text. Your document enters the privacy layer right here in your browser -- it never touches any server.",
+    desc: "Drop in a PDF, snap a photo of a letter, or paste text. Your document enters the privacy layer right here in your browser — it never touches any server.",
   },
   {
     num: "02", title: "Detect",
-    desc: "50+ detection patterns scan your document in parallel. Names, emails, Swiss AHV numbers, IBANs, phone numbers, addresses, dates of birth, insurance IDs -- if it can identify someone, we catch it.",
+    desc: "50+ detection patterns scan your document in parallel. Names, emails, Swiss AHV numbers, IBANs, phone numbers, addresses, dates of birth, insurance IDs — if it can identify someone, we catch it.",
   },
   {
     num: "03", title: "Replace",
-    desc: "Every personal detail is swapped with a safe placeholder -- [NAME_01], [EMAIL_01], etc. The mapping is locked in an AES-256 encrypted vault that only you hold the key to.",
+    desc: "Every personal detail is swapped with a safe placeholder — [NAME_01], [EMAIL_01], etc. The mapping is locked in an AES-256 encrypted vault that only you hold the key to.",
   },
   {
     num: "04", title: "Share safely",
@@ -42,7 +42,7 @@ const STEPS = [
   },
   {
     num: "06", title: "Audit trail",
-    desc: "Every scan and redaction is logged locally -- what was found, what category, what risk level. Ready for GDPR, HIPAA, and SOC 2 compliance reviews.",
+    desc: "Every scan and redaction is logged locally — what was found, what category, what risk level. Ready for GDPR, HIPAA, and SOC 2 compliance reviews.",
   },
 ];
 
@@ -66,10 +66,10 @@ const COMPLIANCE = ["GDPR", "HIPAA", "CCPA", "SOC 2 Type II", "ISO 27001", "PCI-
 const CODE_EXAMPLE = `import { wrapLanguageModel } from "ai";
 import { privacyLayer } from "privacylayer";
 
-// Before -- personal data goes straight to the model
+// Before — personal data goes straight to the model
 streamText({ model, messages });
 
-// After -- one line. Zero personal data leaves your app.
+// After — one line. Zero personal data leaves your app.
 streamText({
   model: wrapLanguageModel(model, privacyLayer()),
   messages,
@@ -124,8 +124,8 @@ export default function Home() {
               to know your name.
             </h1>
             <p className="text-base text-muted-foreground leading-relaxed max-w-xl">
-              Every time you paste a document into an AI, your personal data -- names, addresses, bank details,
-              health records -- leaves your device forever.
+              Every time you paste a document into an AI, your personal data — names, addresses, bank details,
+              health records — leaves your device forever.
             </p>
             <p className="text-base text-foreground leading-relaxed max-w-xl font-medium">
               PrivacyLayer strips all personal information before it reaches any AI model.
@@ -168,9 +168,9 @@ export default function Home() {
                 <h3 className="text-sm font-semibold mb-1">How can you be sure your data stays private?</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   All scanning, redaction, and encryption happens in JavaScript running in your browser tab.
-                  Open your browser&apos;s Network tab -- you will see zero outgoing requests with personal data.
+                  Open your browser&apos;s Network tab — you will see zero outgoing requests with personal data.
                   There is no backend that processes your documents. The source code is fully open on GitHub.
-                  This is not a promise -- it is a technical guarantee you can verify yourself.
+                  This is not a promise — it is a technical guarantee you can verify yourself.
                 </p>
               </div>
             </div>
@@ -187,7 +187,7 @@ export default function Home() {
               <p className="text-xs font-semibold text-destructive mb-3">Without PrivacyLayer</p>
               <p className="text-sm text-muted-foreground leading-relaxed mb-4">
                 You paste a hospital invoice into ChatGPT. Your name, your diagnosis, your insurance number,
-                your home address -- all of it travels to a server in the US. Stored. Logged. Gone.
+                your home address — all of it travels to a server in the US. Stored. Logged. Gone.
               </p>
               <div className="font-mono text-xs text-muted-foreground bg-background p-3 border border-border">
                 <span className="text-destructive">Patient: Dr. Maria Bernasconi</span><br />
@@ -235,7 +235,7 @@ export default function Home() {
             </div>
           </div>
           <p className="text-[11px] text-muted-foreground mt-3 font-mono">
-            The AI model (greyed) receives only anonymized text -- it operates inside the same pipeline as any other vendor.
+            The AI model (greyed) receives only anonymized text — it operates inside the same pipeline as any other vendor.
           </p>
         </div>
 
@@ -311,21 +311,21 @@ export default function Home() {
             <div className="p-6 border-b md:border-b-0 md:border-r border-border">
               <h3 className="text-sm font-semibold mb-2">Too many AI models</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Claude, GPT, Gemini, Mistral, Llama -- new models launch every week. You want to test them all.
+                Claude, GPT, Gemini, Mistral, Llama — new models launch every week. You want to test them all.
                 But every model means another company seeing your data. PrivacyLayer lets you try any model safely.
               </p>
             </div>
             <div className="p-6 border-b md:border-b-0 md:border-r border-border">
               <h3 className="text-sm font-semibold mb-2">Data sovereignty matters</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                European companies and citizens need to use AI -- but can we trust US-based providers with our
+                European companies and citizens need to use AI — but can we trust US-based providers with our
                 health records, financial data, and personal information? PrivacyLayer means you don&apos;t have to trust anyone.
               </p>
             </div>
             <div className="p-6">
               <h3 className="text-sm font-semibold mb-2">Layers of privacy risk</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Some data is obvious -- names and SSNs. But what about &quot;my brother lives in Zurich&quot; or
+                Some data is obvious — names and SSNs. But what about &quot;my brother lives in Zurich&quot; or
                 &quot;I take insulin daily&quot;? We detect both explicit identifiers and contextual personal information
                 that can identify someone indirectly.
               </p>
