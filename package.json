@@ -14,7 +14,7 @@
     "@types/react": "latest",
     "next": "latest",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^5.5.207",
+    "pdfjs-dist": "^3.11.174",
     "postcss": "latest",
     "react": "latest",
     "react-dom": "latest",
