@@ -285,32 +285,30 @@ export default function Playground() {
 
   return (
     <div className="min-h-screen">
-      <nav className="fixed top-0 w-full z-50 glass">
-        <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3" strokeLinecap="round">
-                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-              </svg>
-            </div>
-            <span className="font-bold text-sm">PrivacyLayer</span>
+      <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur-sm">
+        <div className="max-w-5xl mx-auto px-5 h-12 flex items-center justify-between gap-6">
+          <Link href="/" className="flex items-center gap-2.5 min-w-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span className="font-semibold text-sm tracking-tight">PrivacyLayer</span>
           </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-xs text-[var(--text-muted)] hover:text-white transition-colors px-3 py-1.5 border border-[var(--border)] rounded-md">
+          <nav className="flex items-center gap-0 border border-border">
+            <Link href="/" className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] flex items-center tracking-wide border-r border-border">
               Architecture
             </Link>
-            <Link href="/playground/chat" className="text-xs text-[var(--text-muted)] hover:text-white transition-colors px-3 py-1.5 border border-[var(--border)] rounded-md">
+            <Link href="/playground/chat" className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] flex items-center tracking-wide border-r border-border">
               AI Chat Demo
             </Link>
-            <span className="text-xs bg-white text-black px-3 py-1.5 rounded-md font-medium">
+            <span className="px-4 py-2 text-xs font-medium bg-foreground text-background min-h-[36px] flex items-center tracking-wide">
               Playground
             </span>
-          </div>
+          </nav>
         </div>
-      </nav>
+      </header>
 
-      <div className="pt-24 px-6 pb-20">
-        <div className="max-w-6xl mx-auto">
+      <div className="pt-10 px-5 pb-20">
+        <div className="max-w-5xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Privacy Playground</h1>
             <p className="text-sm text-[var(--text-muted)]">
@@ -438,7 +436,7 @@ export default function Playground() {
                   disabled={processing || !inputText.trim()}
                   className="mt-4 w-full py-3 bg-[var(--accent)] text-black font-semibold rounded-lg text-sm hover:bg-[var(--accent-muted)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  {processing ? "Scanning..." : "Scan for PII"}
+                  {processing ? "Scanning..." : "Scan for personal data"}
                 </button>
               )}
             </div>
