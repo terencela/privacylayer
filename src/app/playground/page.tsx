@@ -452,7 +452,7 @@ export default function Playground() {
                 <button
                   onClick={() => handleScan(inputText)}
                   disabled={processing || !inputText.trim()}
-                  className="mt-4 w-full py-3 bg-[var(--accent)] text-black font-semibold rounded-lg text-sm hover:bg-[var(--accent-muted)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="mt-4 w-full py-3 bg-[var(--accent)] text-black font-semibold rounded-lg text-sm hover:opacity-80 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   {processing ? "Scanning..." : "Scan for personal data"}
                 </button>
