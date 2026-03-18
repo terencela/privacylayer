@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
-import { detectPII, rehydrate, encryptVault, THREAT_DESCRIPTIONS } from "@/lib/pii-engine";
+import { detectPII, rehydrate, encryptVault, decryptVault, THREAT_DESCRIPTIONS } from "@/lib/pii-engine";
 import type { PIIResult } from "@/lib/pii-engine";
 
 const SAMPLE_TEXTS = {
@@ -55,33 +55,40 @@ export default function Playground() {
   const [result, setResult] = useState<PIIResult | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("text");
   const [processing, setProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState("");
   const [showThreat, setShowThreat] = useState(false);
   const [vaultKey, setVaultKey] = useState<string | null>(null);
+  const [vaultPassword, setVaultPassword] = useState<string | null>(null);
   const [rehydratedText, setRehydratedText] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
+  const keyInputRef = useRef<HTMLInputElement>(null);
 
   const handleScan = useCallback(async (text: string) => {
     if (!text.trim()) return;
     setProcessing(true);
     setRehydratedText(null);
     setVaultKey(null);
+    setVaultPassword(null);
     setShowThreat(false);
 
-    await new Promise((r) => setTimeout(r, 400));
+    await new Promise((r) => setTimeout(r, 300));
     const piiResult = detectPII(text);
     setResult(piiResult);
 
-    await new Promise((r) => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 200));
     setShowThreat(true);
 
     if (Object.keys(piiResult.vault).length > 0) {
       const sessionPassword = crypto.randomUUID();
+      setVaultPassword(sessionPassword);
       const encrypted = await encryptVault(piiResult.vault, sessionPassword);
       setVaultKey(encrypted);
     }
 
     setProcessing(false);
+    setProcessingStatus("");
   }, []);
 
   const handleRehydrate = useCallback(() => {
@@ -91,68 +98,166 @@ export default function Playground() {
   }, [result]);
 
   const handlePdfUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setProcessing(true);
+    setUploadedFiles([]);
+
     try {
       const pdfjsLib = await import("pdfjs-dist");
       pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let fullText = "";
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const strings = content.items.map((item: unknown) => {
-          const t = item as Record<string, unknown>;
-          return typeof t.str === "string" ? t.str : "";
-        }).join(" ");
-        fullText += strings + "\n\n";
+
+      let allText = "";
+      const fileNames: string[] = [];
+
+      for (let f = 0; f < files.length; f++) {
+        const file = files[f];
+        fileNames.push(file.name);
+        setProcessingStatus(`Processing ${f + 1}/${files.length}: ${file.name}`);
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fileText = `--- ${file.name} ---\n`;
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const strings = content.items.map((item: unknown) => {
+            const t = item as Record<string, unknown>;
+            return typeof t.str === "string" ? t.str : "";
+          }).join(" ");
+          fileText += strings + "\n";
+        }
+        allText += fileText + "\n\n";
       }
-      setInputText(fullText);
-      await handleScan(fullText);
+
+      setUploadedFiles(fileNames);
+      setInputText(allText);
+      await handleScan(allText);
     } catch {
-      setInputText("Error reading PDF. Please try a text-based PDF.");
+      setInputText("Error reading PDF(s). Please try text-based PDFs.");
       setProcessing(false);
+      setProcessingStatus("");
     }
   }, [handleScan]);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setProcessing(true);
+    setUploadedFiles([]);
+
     try {
       const Tesseract = await import("tesseract.js");
-      const { data: { text } } = await Tesseract.recognize(file, "eng+deu+fra", {});
-      setInputText(text);
-      await handleScan(text);
+      let allText = "";
+      const fileNames: string[] = [];
+
+      for (let f = 0; f < files.length; f++) {
+        const file = files[f];
+        fileNames.push(file.name);
+        setProcessingStatus(`OCR ${f + 1}/${files.length}: ${file.name}`);
+        const { data: { text } } = await Tesseract.recognize(file, "eng+deu+fra", {});
+        allText += `--- ${file.name} ---\n${text}\n\n`;
+      }
+
+      setUploadedFiles(fileNames);
+      setInputText(allText);
+      await handleScan(allText);
     } catch {
-      setInputText("Error processing image. Please try again.");
+      setInputText("Error processing image(s). Please try again.");
       setProcessing(false);
+      setProcessingStatus("");
     }
   }, [handleScan]);
 
-  const downloadRedacted = useCallback(() => {
+  const downloadRedactedPdf = useCallback(async () => {
     if (!result) return;
-    const blob = new Blob([result.anonymized], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "redacted-document.txt";
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const { PDFDocument, rgb, StandardFonts } = await import("pdf-lib");
+      const pdfDoc = await PDFDocument.create();
+      const font = await pdfDoc.embedFont(StandardFonts.Courier);
+      const fontSize = 10;
+      const margin = 50;
+      const lineHeight = 14;
+
+      const lines = result.anonymized.split("\n");
+      let page = pdfDoc.addPage();
+      let y = page.getHeight() - margin;
+
+      for (const line of lines) {
+        if (y < margin) {
+          page = pdfDoc.addPage();
+          y = page.getHeight() - margin;
+        }
+
+        const tokenRegex = /\[[A-Z_]+_\d{2}\]/g;
+        let lastIndex = 0;
+        let x = margin;
+        let match;
+
+        while ((match = tokenRegex.exec(line)) !== null) {
+          const before = line.slice(lastIndex, match.index);
+          if (before) {
+            page.drawText(before, { x, y, size: fontSize, font, color: rgb(0.8, 0.8, 0.8) });
+            x += font.widthOfTextAtSize(before, fontSize);
+          }
+          const token = match[0];
+          page.drawRectangle({ x: x - 1, y: y - 3, width: font.widthOfTextAtSize(token, fontSize) + 2, height: lineHeight, color: rgb(0.13, 0.77, 0.37) });
+          page.drawText(token, { x, y, size: fontSize, font, color: rgb(0, 0, 0) });
+          x += font.widthOfTextAtSize(token, fontSize);
+          lastIndex = match.index + token.length;
+        }
+
+        const remaining = line.slice(lastIndex);
+        if (remaining) {
+          page.drawText(remaining, { x, y, size: fontSize, font, color: rgb(0.8, 0.8, 0.8) });
+        }
+
+        y -= lineHeight;
+      }
+
+      page.drawText("Redacted by PrivacyLayer — all PII tokenized with AES-256 vault", {
+        x: margin, y: margin - 20, size: 8, font, color: rgb(0.4, 0.4, 0.4),
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "redacted-document.pdf";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF generation error:", err);
+    }
   }, [result]);
 
   const downloadVaultKey = useCallback(() => {
-    if (!vaultKey) return;
-    const blob = new Blob([vaultKey], { type: "text/plain" });
+    if (!vaultKey || !vaultPassword) return;
+    const payload = JSON.stringify({ encrypted: vaultKey, hint: "Use PrivacyLayer to decrypt" }, null, 2);
+    const blob = new Blob([payload], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "privacylayer-vault-key.enc";
+    a.download = "privacylayer-vault.key";
     a.click();
     URL.revokeObjectURL(url);
-  }, [vaultKey]);
+  }, [vaultKey, vaultPassword]);
+
+  const handleKeyImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !result) return;
+    try {
+      const text = await file.text();
+      const { encrypted } = JSON.parse(text);
+      if (!encrypted || !vaultPassword) return;
+      const vault = await decryptVault(encrypted, vaultPassword);
+      const restored = rehydrate(result.anonymized, vault);
+      setRehydratedText(restored);
+    } catch {
+      alert("Invalid or mismatched vault key file.");
+    }
+  }, [result, vaultPassword]);
 
   const threatColor =
     !result ? "var(--text-muted)" :
@@ -180,7 +285,6 @@ export default function Playground() {
 
   return (
     <div className="min-h-screen">
-      {/* Nav */}
       <nav className="fixed top-0 w-full z-50 glass">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2">
@@ -195,6 +299,9 @@ export default function Playground() {
             <Link href="/" className="text-xs text-[var(--text-muted)] hover:text-white transition-colors px-3 py-1.5 border border-[var(--border)] rounded-md">
               Architecture
             </Link>
+            <Link href="/playground/chat" className="text-xs text-[var(--text-muted)] hover:text-white transition-colors px-3 py-1.5 border border-[var(--border)] rounded-md">
+              AI Chat Demo
+            </Link>
             <span className="text-xs bg-white text-black px-3 py-1.5 rounded-md font-medium">
               Playground
             </span>
@@ -207,13 +314,12 @@ export default function Playground() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Privacy Playground</h1>
             <p className="text-sm text-[var(--text-muted)]">
-              Upload a PDF, scan an image, or paste text. All processing happens locally in your browser.
+              Upload PDFs, scan images, or paste text. Batch upload supported. All processing happens locally in your browser.
             </p>
           </div>
 
-          {/* Input Tabs */}
           <div className="flex gap-2 mb-6">
-            {([["text", "Paste Text"], ["pdf", "Upload PDF"], ["image", "Scan Image"]] as [TabKey, string][]).map(
+            {([["text", "Paste Text"], ["pdf", "Upload PDFs"], ["image", "Scan Images"]] as [TabKey, string][]).map(
               ([key, label]) => (
                 <button
                   key={key}
@@ -231,12 +337,11 @@ export default function Playground() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left: Input */}
             <div>
               <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg overflow-hidden">
                 <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
                   <span className="text-xs font-semibold text-[var(--text-muted)]">
-                    {activeTab === "text" ? "INPUT DOCUMENT" : activeTab === "pdf" ? "PDF UPLOAD" : "IMAGE / SCAN"}
+                    {activeTab === "text" ? "INPUT DOCUMENT" : activeTab === "pdf" ? "PDF UPLOAD (MULTI-FILE)" : "IMAGE / SCAN (MULTI-FILE)"}
                   </span>
                   {activeTab === "text" && (
                     <div className="flex gap-2">
@@ -257,39 +362,71 @@ export default function Playground() {
                   <textarea
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    placeholder="Paste a document containing personal information..."
+                    placeholder="Paste a document containing personal information...&#10;&#10;Or click one of the sample documents above."
                     className="w-full h-80 bg-transparent p-4 text-sm mono leading-relaxed resize-none focus:outline-none placeholder:text-[var(--text-muted)]/50"
                   />
                 )}
                 {activeTab === "pdf" && (
                   <div className="h-80 flex items-center justify-center">
                     <div className="text-center">
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-6 py-3 bg-white text-black rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
-                      >
-                        Choose PDF File
-                      </button>
-                      <p className="text-xs text-[var(--text-muted)] mt-3">
-                        Text is extracted client-side. Nothing leaves your browser.
-                      </p>
-                      <input ref={fileInputRef} type="file" accept=".pdf" className="hidden" onChange={handlePdfUpload} />
+                      {processing ? (
+                        <div>
+                          <div className="w-10 h-10 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                          <p className="text-sm text-[var(--text-muted)]">{processingStatus}</p>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-6 py-3 bg-white text-black rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
+                          >
+                            Choose PDF Files
+                          </button>
+                          <p className="text-xs text-[var(--text-muted)] mt-3">
+                            Select one or many PDFs. Text extracted client-side.
+                          </p>
+                          {uploadedFiles.length > 0 && (
+                            <div className="mt-4 text-left">
+                              {uploadedFiles.map((f) => (
+                                <p key={f} className="text-xs text-[var(--accent)] mono">{f}</p>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                      <input ref={fileInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handlePdfUpload} />
                     </div>
                   </div>
                 )}
                 {activeTab === "image" && (
                   <div className="h-80 flex items-center justify-center">
                     <div className="text-center">
-                      <button
-                        onClick={() => imgInputRef.current?.click()}
-                        className="px-6 py-3 bg-white text-black rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
-                      >
-                        Choose Image / Scan
-                      </button>
-                      <p className="text-xs text-[var(--text-muted)] mt-3">
-                        OCR via Tesseract.js — runs entirely in your browser.
-                      </p>
-                      <input ref={imgInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                      {processing ? (
+                        <div>
+                          <div className="w-10 h-10 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                          <p className="text-sm text-[var(--text-muted)]">{processingStatus}</p>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => imgInputRef.current?.click()}
+                            className="px-6 py-3 bg-white text-black rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
+                          >
+                            Choose Images / Scans
+                          </button>
+                          <p className="text-xs text-[var(--text-muted)] mt-3">
+                            OCR via Tesseract.js — select multiple files. Runs in your browser.
+                          </p>
+                          {uploadedFiles.length > 0 && (
+                            <div className="mt-4 text-left">
+                              {uploadedFiles.map((f) => (
+                                <p key={f} className="text-xs text-[var(--accent)] mono">{f}</p>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                      <input ref={imgInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
                     </div>
                   </div>
                 )}
@@ -306,9 +443,7 @@ export default function Playground() {
               )}
             </div>
 
-            {/* Right: Output */}
             <div className="space-y-6">
-              {/* Threat Score */}
               {result && showThreat && (
                 <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-6 animate-fade-in-up">
                   <div className="flex items-center justify-between mb-4">
@@ -348,7 +483,6 @@ export default function Playground() {
                       </ul>
                     </div>
                   )}
-                  {/* Risk Breakdown */}
                   <div className="border-t border-[var(--border)] pt-4 mt-4">
                     <div className="flex flex-wrap gap-2">
                       {result.riskBreakdown.map((r) => (
@@ -374,7 +508,6 @@ export default function Playground() {
                 </div>
               )}
 
-              {/* Anonymized Output */}
               {result && (
                 <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg overflow-hidden animate-fade-in-up">
                   <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
@@ -383,15 +516,17 @@ export default function Playground() {
                     </span>
                     <div className="flex gap-2">
                       {!rehydratedText && (
-                        <button
-                          onClick={handleRehydrate}
-                          className="text-xs text-[var(--accent)] hover:underline"
-                        >
+                        <button onClick={handleRehydrate} className="text-xs text-[var(--accent)] hover:underline">
                           Re-hydrate
                         </button>
                       )}
-                      <button onClick={downloadRedacted} className="text-xs text-[var(--text-muted)] hover:text-white">
-                        Download
+                      {rehydratedText && (
+                        <button onClick={() => setRehydratedText(null)} className="text-xs text-[var(--text-muted)] hover:underline">
+                          Show redacted
+                        </button>
+                      )}
+                      <button onClick={downloadRedactedPdf} className="text-xs text-[var(--text-muted)] hover:text-white border border-[var(--border)] px-2 py-0.5 rounded">
+                        Download PDF
                       </button>
                     </div>
                   </div>
@@ -412,17 +547,25 @@ export default function Playground() {
                 </div>
               )}
 
-              {/* Vault Key */}
               {vaultKey && (
                 <div className="bg-[var(--bg-card)] border border-[var(--accent)]/30 rounded-lg p-4 animate-fade-in-up">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-semibold text-[var(--accent)]">ENCRYPTED VAULT KEY</span>
-                    <button
-                      onClick={downloadVaultKey}
-                      className="text-xs bg-[var(--accent)] text-black px-3 py-1 rounded font-medium hover:bg-[var(--accent-muted)] transition-colors"
-                    >
-                      Download .enc Key
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => keyInputRef.current?.click()}
+                        className="text-xs border border-[var(--accent)] text-[var(--accent)] px-3 py-1 rounded font-medium hover:bg-[var(--accent)]/10 transition-colors"
+                      >
+                        Import Key
+                      </button>
+                      <button
+                        onClick={downloadVaultKey}
+                        className="text-xs bg-[var(--accent)] text-black px-3 py-1 rounded font-medium hover:bg-[var(--accent-muted)] transition-colors"
+                      >
+                        Download Key
+                      </button>
+                      <input ref={keyInputRef} type="file" accept=".key" className="hidden" onChange={handleKeyImport} />
+                    </div>
                   </div>
                   <p className="mono text-xs text-[var(--text-muted)] break-all line-clamp-2">
                     {vaultKey.slice(0, 120)}...
@@ -433,11 +576,10 @@ export default function Playground() {
                 </div>
               )}
 
-              {/* Token Mapping Table */}
               {result && result.matches.length > 0 && (
                 <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg overflow-hidden animate-fade-in-up">
                   <div className="px-4 py-3 border-b border-[var(--border)]">
-                    <span className="text-xs font-semibold text-[var(--text-muted)]">TOKEN MAPPING</span>
+                    <span className="text-xs font-semibold text-[var(--text-muted)]">TOKEN MAPPING ({result.matches.length} items)</span>
                   </div>
                   <div className="max-h-48 overflow-y-auto">
                     {result.matches.map((m, i) => (
