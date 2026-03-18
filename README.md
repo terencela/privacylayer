@@ -116,7 +116,15 @@ Swiss-specific: AHV/AVS numbers, CH-prefix IBANs, +41 phone formats, German/Fren
 
 ---
 
-## Getting Started
+## Try It
+
+**Just open the website -- no install needed:**
+
+- **Live demo:** [privacylayer.vercel.app](https://privacylayer.vercel.app)
+- **Playground:** [privacylayer.vercel.app/playground](https://privacylayer.vercel.app/playground)
+- **AI Chat Demo:** [privacylayer.vercel.app/playground/chat](https://privacylayer.vercel.app/playground/chat)
+
+### Run locally (optional)
 
 ```bash
 git clone https://github.com/terencela/privacylayer.git
