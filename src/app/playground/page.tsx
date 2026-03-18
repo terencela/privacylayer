@@ -61,6 +61,7 @@ export default function Playground() {
   const [vaultPassword, setVaultPassword] = useState<string | null>(null);
   const [rehydratedText, setRehydratedText] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [copiedOutput, setCopiedOutput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
   const keyInputRef = useRef<HTMLInputElement>(null);
@@ -512,7 +513,7 @@ export default function Playground() {
                     <span className="text-xs font-semibold text-[var(--text-muted)]">
                       {rehydratedText ? "RE-HYDRATED OUTPUT" : "ANONYMIZED OUTPUT"}
                     </span>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       {!rehydratedText && (
                         <button onClick={handleRehydrate} className="text-xs text-[var(--accent)] hover:underline">
                           Re-hydrate
@@ -523,12 +524,33 @@ export default function Playground() {
                           Show redacted
                         </button>
                       )}
-                      <button onClick={downloadRedactedPdf} className="text-xs text-[var(--text-muted)] hover:text-white border border-[var(--border)] px-2 py-0.5 rounded">
-                        Download PDF
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(rehydratedText || result.anonymized);
+                          setCopiedOutput(true);
+                          setTimeout(() => setCopiedOutput(false), 2000);
+                        }}
+                        className="text-xs bg-[var(--accent)] text-black font-semibold px-3 py-1 rounded hover:opacity-90 transition-opacity"
+                      >
+                        {copiedOutput ? "Copied!" : "Copy"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          const blob = new Blob([rehydratedText || result.anonymized], { type: "text/plain" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = "redacted-document.txt";
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="text-xs text-[var(--text-muted)] hover:text-white border border-[var(--border)] px-2 py-1 rounded transition-colors"
+                      >
+                        Download
                       </button>
                     </div>
                   </div>
-                  <div className="p-4 h-64 overflow-y-auto">
+                  <div className="p-4 min-h-48 overflow-y-auto">
                     <pre className="mono text-sm leading-relaxed whitespace-pre-wrap">
                       {(rehydratedText || result.anonymized).split(/(\[[A-Z_]+_\d{2}\])/).map((part, i) => {
                         if (/^\[[A-Z_]+_\d{2}\]$/.test(part)) {
