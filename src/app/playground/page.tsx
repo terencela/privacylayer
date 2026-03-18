@@ -63,6 +63,8 @@ export default function Playground() {
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [copiedOutput, setCopiedOutput] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [aiResponseInput, setAiResponseInput] = useState("");
+  const [showAiInput, setShowAiInput] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
   const keyInputRef = useRef<HTMLInputElement>(null);
@@ -107,7 +109,7 @@ export default function Playground() {
 
     try {
       const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
 
       let allText = "";
       const fileNames: string[] = [];
@@ -580,6 +582,37 @@ export default function Playground() {
                         return <span key={i}>{part}</span>;
                       })}
                     </pre>
+                  </div>
+                </div>
+              )}
+
+              {result && !rehydratedText && (
+                <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg overflow-hidden animate-fade-in-up">
+                  <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-semibold">PASTE AI RESPONSE HERE</span>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">Copy the clean text → paste into ChatGPT → copy response → paste below → restore real values</p>
+                    </div>
+                  </div>
+                  <textarea
+                    value={aiResponseInput}
+                    onChange={(e) => setAiResponseInput(e.target.value)}
+                    placeholder={"Paste ChatGPT / Claude response here...\n\nExample: \"I recommend [NAME_01] should follow up with [PHONE_01]...\""}
+                    className="w-full h-36 bg-transparent p-4 text-sm mono leading-relaxed resize-none focus:outline-none placeholder:text-[var(--text-muted)]/40"
+                  />
+                  <div className="px-4 py-3 border-t border-[var(--border)]">
+                    <button
+                      onClick={() => {
+                        if (!aiResponseInput.trim()) return;
+                        const restored = rehydrate(aiResponseInput, result.vault);
+                        setRehydratedText(restored);
+                        setAiResponseInput("");
+                      }}
+                      disabled={!aiResponseInput.trim()}
+                      className="w-full py-2 bg-[var(--accent)] text-black font-semibold text-sm rounded hover:opacity-80 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      Restore real values
+                    </button>
                   </div>
                 </div>
               )}
