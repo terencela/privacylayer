@@ -62,6 +62,7 @@ export default function Playground() {
   const [rehydratedText, setRehydratedText] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [copiedOutput, setCopiedOutput] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imgInputRef = useRef<HTMLInputElement>(null);
   const keyInputRef = useRef<HTMLInputElement>(null);
@@ -366,7 +367,22 @@ export default function Playground() {
                   />
                 )}
                 {activeTab === "pdf" && (
-                  <div className="h-80 flex items-center justify-center">
+                  <div
+                    className={`h-80 flex items-center justify-center border-2 border-dashed transition-colors ${
+                      dragging ? "border-[var(--accent)] bg-[var(--accent)]/5" : "border-transparent"
+                    }`}
+                    onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                    onDragLeave={() => setDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragging(false);
+                      const files = e.dataTransfer.files;
+                      if (files.length > 0) {
+                        const fakeEvent = { target: { files } } as unknown as React.ChangeEvent<HTMLInputElement>;
+                        handlePdfUpload(fakeEvent);
+                      }
+                    }}
+                  >
                     <div className="text-center">
                       {processing ? (
                         <div>
@@ -375,6 +391,7 @@ export default function Playground() {
                         </div>
                       ) : (
                         <>
+                          <p className="text-3xl mb-4">📄</p>
                           <button
                             onClick={() => fileInputRef.current?.click()}
                             className="px-6 py-3 bg-white text-black rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
@@ -382,7 +399,7 @@ export default function Playground() {
                             Choose PDF Files
                           </button>
                           <p className="text-xs text-[var(--text-muted)] mt-3">
-                            Select one or many PDFs. Text extracted client-side.
+                            or drag and drop here
                           </p>
                           {uploadedFiles.length > 0 && (
                             <div className="mt-4 text-left">
