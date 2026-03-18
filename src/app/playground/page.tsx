@@ -345,20 +345,23 @@ export default function Playground() {
                   <span className="text-xs font-semibold text-[var(--text-muted)]">
                     {activeTab === "text" ? "INPUT DOCUMENT" : activeTab === "pdf" ? "PDF UPLOAD (MULTI-FILE)" : "IMAGE / SCAN (MULTI-FILE)"}
                   </span>
-                  {activeTab === "text" && (
+                </div>
+                {activeTab === "text" && (
+                  <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-3 bg-[var(--accent)]/5">
+                    <span className="text-[11px] font-mono text-[var(--accent)] uppercase tracking-wider shrink-0">Try a sample →</span>
                     <div className="flex gap-2">
                       {Object.keys(SAMPLE_TEXTS).map((key) => (
                         <button
                           key={key}
                           onClick={() => setInputText(SAMPLE_TEXTS[key as keyof typeof SAMPLE_TEXTS])}
-                          className="text-xs text-[var(--accent)] hover:underline capitalize"
+                          className="text-xs font-semibold px-3 py-1.5 border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-black transition-colors capitalize"
                         >
                           {key}
                         </button>
                       ))}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {activeTab === "text" && (
                   <textarea
