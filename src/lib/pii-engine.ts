@@ -130,9 +130,9 @@ const PII_PATTERNS: PatternDef[] = [
     type: "ADDRESS",
     label: "Street Address",
     patterns: [
-      /\b\d{1,5}\s+(?:[A-Z][a-zA-Zäöüéèê]+\s){1,4}(?:Street|St|Avenue|Ave|Boulevard|Blvd|Road|Rd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Way|Strasse|Str|Gasse|Weg|Platz|Allee)\b\.?/gi,
-      /\b(?:[A-Z][a-zäöüéèê]+(?:strasse|gasse|weg|platz|allee))\s+\d{1,5}[a-z]?\b/gi,
-      /\b\d{4,5}\s+[A-Z][a-zäöüéèê]+(?:\s[A-Z][a-zäöüéèê]+)?\b/g,
+      /\b\d{1,5}[ \t]+(?:[A-Z][a-zA-Zäöüéèê]+[ \t]){1,4}(?:Street|St|Avenue|Ave|Boulevard|Blvd|Road|Rd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Way|Strasse|Str|Gasse|Weg|Platz|Allee)\b\.?/gi,
+      /\b(?:[A-Z][a-zäöüéèê]+(?:strasse|gasse|weg|platz|allee|quai))[ \t]+\d{1,5}[a-z]?\b/gi,
+      /\b\d{4}[ \t]+[A-ZÄÖÜ][a-zäöüéèê]+(?:[ \t]+[A-ZÄÖÜ][a-zäöüéèê]+)?\b/g,
     ],
   },
   {
@@ -147,8 +147,8 @@ const PII_PATTERNS: PatternDef[] = [
     type: "NAME",
     label: "Full Name",
     patterns: [
-      /\b(?:Mr|Mrs|Ms|Dr|Prof|Herr|Frau|Monsieur|Madame)\.?\s+[A-ZÄÖÜ][a-zäöüéèê]+(?:\s+[A-ZÄÖÜ][a-zäöüéèê]+){1,3}\b/g,
-      /\b(?:name|patient|kunde|client|versicherte[r]?)\s*[:\s]\s*([A-ZÄÖÜ][a-zäöüéèê]+(?:\s+[A-ZÄÖÜ][a-zäöüéèê]+){1,3})\b/gi,
+      /\b(?:Mr|Mrs|Ms|Dr|Prof|Herr|Frau|Monsieur|Madame)\.?[ \t]+[A-ZÄÖÜ][a-zäöüéèê]+(?:[ \t]+[A-ZÄÖÜ][a-zäöüéèê\-]+){1,3}\b/gm,
+      /\b(?:name|patient|kunde|client|versicherte[r]?)[ \t]*[:.][ \t]*([A-ZÄÖÜ][a-zäöüéèê]+(?:[ \t]+[A-ZÄÖÜ][a-zäöüéèê\-]+){1,3})\b/gi,
     ],
   },
 ];
