@@ -290,7 +290,7 @@ export default function Playground() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="max-w-5xl mx-auto px-5 h-12 flex items-center justify-between gap-6">
+        <div className="w-full max-w-5xl mx-auto px-4 sm:px-5 h-12 flex items-center justify-between gap-6">
           <Link href="/" className="flex items-center gap-2.5 min-w-0">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -298,10 +298,10 @@ export default function Playground() {
             <span className="font-semibold text-sm tracking-tight">PrivacyLayer</span>
           </Link>
           <nav className="flex items-center gap-0 border border-border">
-            <Link href="/" className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] flex items-center tracking-wide border-r border-border">
+            <Link href="/" className="hidden sm:flex px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] items-center tracking-wide border-r border-border">
               Architecture
             </Link>
-            <Link href="/playground/chat" className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] flex items-center tracking-wide border-r border-border">
+            <Link href="/playground/chat" className="hidden sm:flex px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] items-center tracking-wide border-r border-border">
               AI Chat Demo
             </Link>
             <span className="px-4 py-2 text-xs font-medium bg-foreground text-background min-h-[36px] flex items-center tracking-wide">
@@ -311,25 +311,27 @@ export default function Playground() {
         </div>
       </header>
 
-      <div className="pt-10 px-5 pb-20">
-        <div className="max-w-5xl mx-auto">
+      <div className="pt-10 px-4 sm:px-5 pb-20">
+        <div className="w-full max-w-5xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Privacy Playground</h1>
-            <p className="text-sm text-[var(--text-muted)]">
-              Upload PDFs, scan images, or paste text. Batch upload supported. All processing happens locally in your browser.
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Privacy Playground</h1>
+            <p className="text-sm text-muted-foreground">
+              Upload PDFs, scan images, or paste text. All processing happens locally in your browser.
             </p>
           </div>
 
-          <div className="flex gap-2 mb-6">
-            {([["text", "Paste Text"], ["pdf", "Upload PDFs"], ["image", "Scan Images"]] as [TabKey, string][]).map(
-              ([key, label]) => (
+          <div className="flex gap-0 mb-6 border border-border w-full sm:w-fit">
+            {([["text", "Paste Text"], ["pdf", "Upload PDF"], ["image", "Scan Image"]] as [TabKey, string][]).map(
+              ([key, label], i) => (
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex-1 sm:flex-none px-4 py-2 text-xs font-medium transition-colors min-h-[36px] tracking-wide ${
+                    i < 2 ? "border-r border-border" : ""
+                  } ${
                     activeTab === key
-                      ? "bg-white text-black"
-                      : "border border-[var(--border)] text-[var(--text-muted)] hover:text-white"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {label}

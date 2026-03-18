@@ -128,7 +128,7 @@ export default function ChatDemo() {
     <div className="min-h-screen flex flex-col">
       {/* Nav */}
       <header className="sticky top-0 z-40 w-full border-b border-border bg-background/95 backdrop-blur-sm">
-        <div className="max-w-5xl mx-auto px-5 h-12 flex items-center justify-between gap-6">
+        <div className="w-full max-w-5xl mx-auto px-4 sm:px-5 h-12 flex items-center justify-between gap-6">
           <Link href="/" className="flex items-center gap-2.5 min-w-0">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -136,10 +136,10 @@ export default function ChatDemo() {
             <span className="font-semibold text-sm tracking-tight">PrivacyLayer</span>
           </Link>
           <nav className="flex items-center gap-0 border border-border">
-            <Link href="/" className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] flex items-center tracking-wide border-r border-border">
+            <Link href="/" className="hidden sm:flex px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] items-center tracking-wide border-r border-border">
               Architecture
             </Link>
-            <Link href="/playground" className="px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] flex items-center tracking-wide border-r border-border">
+            <Link href="/playground" className="hidden sm:flex px-4 py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors min-h-[36px] items-center tracking-wide border-r border-border">
               Playground
             </Link>
             <span className="px-4 py-2 text-xs font-medium bg-foreground text-background min-h-[36px] flex items-center tracking-wide">
@@ -235,8 +235,8 @@ export default function ChatDemo() {
 
       {/* Input */}
       <div className="fixed bottom-0 w-full glass border-t border-[var(--border)]">
-        <div className="max-w-3xl mx-auto px-6 py-4">
-          <div className="flex gap-3">
+        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex gap-2">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
