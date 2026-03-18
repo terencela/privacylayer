@@ -92,7 +92,9 @@ PrivacyLayer is a browser-based tool that detects and replaces personal informat
 
 ## Try It
 
-- **Live demo**: https://privacylayer.vercel.app
+- **Live demo**: https://privacylayer.vercel.app (also: https://privacylayer-terencelas-projects.vercel.app)
+- **Playground**: https://privacylayer.vercel.app/playground
+- **AI Chat Demo**: https://privacylayer.vercel.app/playground/chat
 - **GitHub**: https://github.com/terencela/privacylayer
 
 ---
