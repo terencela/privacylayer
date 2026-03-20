@@ -61,7 +61,7 @@ const CATEGORIES = [
   ["Tax ID / EIN", "[TAX_ID_01]", "ZH-2025-449812"],
 ];
 
-const COMPLIANCE = ["GDPR", "HIPAA", "CCPA", "SOC 2 Type II", "ISO 27001", "PCI-DSS"];
+
 
 const CODE_EXAMPLE = `import { wrapLanguageModel } from "ai";
 import { privacyLayer } from "privacylayer";
@@ -287,16 +287,39 @@ export default function Home() {
 
         {/* Compliance */}
         <div className="py-14 border-b border-border">
-          <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-widest mb-6">
-            Compliance coverage
+          <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-widest mb-4">
+            Compliance
           </p>
-          <div className="flex flex-wrap gap-0 border border-border w-fit max-w-full">
-            {COMPLIANCE.map((badge) => (
-              <span key={badge} className="px-4 py-2 text-xs font-semibold border-r border-border last:border-r-0">
-                {badge}
-              </span>
-            ))}
+          <h2 className="text-2xl font-bold mb-4">Use any AI without violating HIPAA.</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl mb-8">
+            HIPAA&apos;s Safe Harbor method defines 18 specific identifiers that must be removed for health data to be legally de-identified.
+            PrivacyLayer detects and strips all 18 — names, dates, phone numbers, emails, account numbers, IP addresses, and more —
+            before your text reaches any AI model. What the AI sees is not Protected Health Information.
+            You stay compliant. The AI stays useful.
+          </p>
+          <div className="grid sm:grid-cols-3 gap-0 border border-border mb-8">
+            <div className="p-5 border-b sm:border-b-0 sm:border-r border-border">
+              <p className="text-xs font-mono text-accent mb-2">HIPAA Safe Harbor</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                All 18 HIPAA identifiers detected and replaced. De-identified output is not PHI and can be sent to any AI provider without violating HIPAA.
+              </p>
+            </div>
+            <div className="p-5 border-b sm:border-b-0 sm:border-r border-border">
+              <p className="text-xs font-mono text-accent mb-2">GDPR Article 4</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                No personal data leaves your device. GDPR only governs personal data — anonymized data is out of scope. PrivacyLayer anonymizes before transmission.
+              </p>
+            </div>
+            <div className="p-5">
+              <p className="text-xs font-mono text-accent mb-2">Swiss DSG / nDSG</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Built with Swiss data standards in mind. AHV numbers, CH-IBANs, and Swiss address formats are detected by default.
+              </p>
+            </div>
           </div>
+          <p className="text-[11px] font-mono text-muted-foreground">
+            Also relevant for teams working under CCPA, SOC 2, ISO 27001, and PCI-DSS requirements.
+          </p>
         </div>
 
         {/* Why This Matters */}

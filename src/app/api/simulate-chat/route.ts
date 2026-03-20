@@ -1,5 +1,52 @@
 import { NextRequest } from "next/server";
 import { detectPII, rehydrate } from "@/lib/pii-engine";
+import OpenAI from "openai";
+
+// ─── Real AI (when OPENAI_API_KEY is set) ────────────────────────────────────
+
+const SYSTEM_PROMPT = `You are a helpful assistant. The user's message may contain anonymized placeholders 
+like [NAME_01], [EMAIL_01], [IBAN_01], [AHV_01] etc. These replace real personal data that has been 
+removed for privacy. Treat the placeholders as if they were the real values. Answer helpfully and naturally, 
+referring to the placeholders by name when needed (e.g. "I can see [NAME_01] has..."). 
+Do not mention or explain the placeholders to the user.`;
+
+async function streamFromOpenAI(
+  anonymizedText: string,
+  vault: Record<string, string>,
+  controller: ReadableStreamDefaultController,
+  encoder: TextEncoder
+) {
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  const stream = await client.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: anonymizedText },
+    ],
+    stream: true,
+    max_tokens: 500,
+  });
+
+  let fullResponse = "";
+
+  for await (const chunk of stream) {
+    const char = chunk.choices[0]?.delta?.content || "";
+    if (char) {
+      fullResponse += char;
+      controller.enqueue(
+        encoder.encode(`data: ${JSON.stringify({ type: "token", char })}\n\n`)
+      );
+    }
+  }
+
+  const rehydrated = rehydrate(fullResponse, vault);
+  controller.enqueue(
+    encoder.encode(`data: ${JSON.stringify({ type: "rehydrated", text: rehydrated })}\n\n`)
+  );
+}
+
+// ─── Simulated fallback (no API key) ─────────────────────────────────────────
 
 const RESPONSE_TEMPLATES: Record<string, (tokens: Record<string, string[]>) => string> = {
   medical: (t) =>
@@ -37,45 +84,73 @@ function detectCategory(text: string): string {
   return "general";
 }
 
-export async function POST(req: NextRequest) {
-  const { text } = await req.json();
-  if (!text) {
-    return new Response("text required", { status: 400 });
-  }
-
-  const piiResult = detectPII(text);
-  const category = detectCategory(text);
-
+async function streamSimulated(
+  piiResult: ReturnType<typeof detectPII>,
+  controller: ReadableStreamDefaultController,
+  encoder: TextEncoder
+) {
   const tokensByType: Record<string, string[]> = {};
   for (const m of piiResult.matches) {
     if (!tokensByType[m.type]) tokensByType[m.type] = [];
     tokensByType[m.type].push(m.token);
   }
 
+  const category = detectCategory(piiResult.anonymized);
   const templateFn = RESPONSE_TEMPLATES[category] || RESPONSE_TEMPLATES.general;
   const aiResponseWithTokens = templateFn(tokensByType);
   const aiResponseRehydrated = rehydrate(aiResponseWithTokens, piiResult.vault);
 
+  await new Promise((r) => setTimeout(r, 400));
+
+  for (let i = 0; i < aiResponseWithTokens.length; i++) {
+    controller.enqueue(
+      encoder.encode(`data: ${JSON.stringify({ type: "token", char: aiResponseWithTokens[i] })}\n\n`)
+    );
+    await new Promise((r) => setTimeout(r, 12));
+  }
+
+  await new Promise((r) => setTimeout(r, 300));
+  controller.enqueue(
+    encoder.encode(`data: ${JSON.stringify({ type: "rehydrated", text: aiResponseRehydrated })}\n\n`)
+  );
+}
+
+// ─── Route handler ────────────────────────────────────────────────────────────
+
+export async function POST(req: NextRequest) {
+  const { text } = await req.json();
+  if (!text) return new Response("text required", { status: 400 });
+
+  const piiResult = detectPII(text);
+  const hasApiKey = !!process.env.OPENAI_API_KEY;
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
+      // Always send the anonymized result first
       controller.enqueue(
-        encoder.encode(`data: ${JSON.stringify({ type: "anonymized", text: piiResult.anonymized, threatScore: piiResult.threatScore, matches: piiResult.matches.length })}\n\n`)
+        encoder.encode(
+          `data: ${JSON.stringify({
+            type: "anonymized",
+            text: piiResult.anonymized,
+            threatScore: piiResult.threatScore,
+            matches: piiResult.matches.length,
+            powered_by: hasApiKey ? "gpt-4o-mini" : "simulated",
+          })}\n\n`
+        )
       );
 
-      await new Promise((r) => setTimeout(r, 500));
-
-      for (let i = 0; i < aiResponseWithTokens.length; i++) {
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ type: "token", char: aiResponseWithTokens[i] })}\n\n`)
-        );
-        await new Promise((r) => setTimeout(r, 15));
+      try {
+        if (hasApiKey) {
+          await streamFromOpenAI(piiResult.anonymized, piiResult.vault, controller, encoder);
+        } else {
+          await streamSimulated(piiResult, controller, encoder);
+        }
+      } catch (err) {
+        // If real AI fails, fall back to simulation silently
+        console.error("OpenAI error, falling back to simulation:", err);
+        await streamSimulated(piiResult, controller, encoder);
       }
-
-      await new Promise((r) => setTimeout(r, 300));
-      controller.enqueue(
-        encoder.encode(`data: ${JSON.stringify({ type: "rehydrated", text: aiResponseRehydrated })}\n\n`)
-      );
 
       controller.enqueue(encoder.encode("data: [DONE]\n\n"));
       controller.close();
