@@ -2,6 +2,24 @@ import { NextRequest } from "next/server";
 import { detectPII, rehydrate } from "@/lib/pii-engine";
 import OpenAI from "openai";
 
+// ─── Rate limiting (in-memory, per IP) ───────────────────────────────────────
+const RATE_LIMIT = 10; // requests
+const RATE_WINDOW = 60 * 60 * 1000; // per hour
+
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW });
+    return false;
+  }
+  if (entry.count >= RATE_LIMIT) return true;
+  entry.count++;
+  return false;
+}
+
 // ─── Real AI (when OPENAI_API_KEY is set) ────────────────────────────────────
 
 const SYSTEM_PROMPT = `You are a helpful assistant. The user's message may contain anonymized placeholders 
@@ -118,6 +136,14 @@ async function streamSimulated(
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  if (isRateLimited(ip)) {
+    return new Response(JSON.stringify({ error: "Rate limit exceeded. Max 10 requests per hour." }), {
+      status: 429,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const { text } = await req.json();
   if (!text) return new Response("text required", { status: 400 });
 
