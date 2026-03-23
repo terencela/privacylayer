@@ -142,6 +142,29 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Chrome Extension Banner */}
+        <div className="py-4 border-b border-border">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-accent/30 bg-accent/5 px-5 py-4">
+            <div className="flex items-center gap-3">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-accent shrink-0">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              <div>
+                <p className="text-sm font-semibold">Chrome Extension now available</p>
+                <p className="text-xs text-muted-foreground">Works directly inside ChatGPT, Claude and Gemini — no copy-paste needed.</p>
+              </div>
+            </div>
+            <a
+              href="https://github.com/terencela/privacylayer"
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 px-4 py-2 text-xs font-semibold border border-accent text-accent hover:bg-accent hover:text-black transition-colors"
+            >
+              Install extension →
+            </a>
+          </div>
+        </div>
+
         {/* Stats */}
         <div className="border-b border-border grid grid-cols-2 sm:grid-cols-4 divide-x divide-border">
           {STATS.map((s) => (

@@ -315,9 +315,27 @@ export default function Playground() {
         <div className="w-full max-w-5xl mx-auto">
           <div className="mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold mb-2">Privacy Playground</h1>
-            <p className="text-sm text-muted-foreground">
-              Upload PDFs, scan images, or paste text. All processing happens locally in your browser.
+            <p className="text-sm text-muted-foreground mb-6">
+              Paste a document, remove all personal data, then safely send it to any AI.
             </p>
+
+            {/* How to use */}
+            <div className="border border-border grid grid-cols-1 sm:grid-cols-4">
+              {[
+                { step: "01", label: "Paste or upload", desc: "Add text, a PDF, or a photo of a document below" },
+                { step: "02", label: "Click Scan", desc: "Personal data is detected and replaced with tokens" },
+                { step: "03", label: "Copy & paste to AI", desc: "Send the clean version to ChatGPT, Claude, or Gemini" },
+                { step: "04", label: "Paste AI response back", desc: "Real names and values are restored automatically" },
+              ].map((s, i) => (
+                <div key={s.step} className={`px-4 py-3 flex gap-3 items-start ${i < 3 ? "border-b sm:border-b-0 sm:border-r border-border" : ""}`}>
+                  <span className="font-mono text-[11px] text-muted-foreground shrink-0 mt-0.5">{s.step}</span>
+                  <div>
+                    <p className="text-xs font-semibold">{s.label}</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="flex gap-0 mb-6 border border-border w-full sm:w-fit">
