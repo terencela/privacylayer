@@ -209,6 +209,37 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Why This Matters */}
+        <div className="py-14 border-b border-border">
+          <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-widest mb-8">
+            Why this matters now
+          </p>
+          <div className="grid md:grid-cols-3 gap-0 border border-border">
+            <div className="p-6 border-b md:border-b-0 md:border-r border-border">
+              <h3 className="text-sm font-semibold mb-2">Too many AI models</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Claude, GPT, Gemini, Mistral, Llama — new models launch every week. You want to test them all.
+                But every model means another company seeing your data. PrivacyLayer lets you try any model safely.
+              </p>
+            </div>
+            <div className="p-6 border-b md:border-b-0 md:border-r border-border">
+              <h3 className="text-sm font-semibold mb-2">Data sovereignty matters</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                European companies and citizens need to use AI — but can we trust US-based providers with our
+                health records, financial data, and personal information? PrivacyLayer means you don&apos;t have to trust anyone.
+              </p>
+            </div>
+            <div className="p-6">
+              <h3 className="text-sm font-semibold mb-2">Layers of privacy risk</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Some data is obvious — names and SSNs. But what about &quot;my brother lives in Zurich&quot; or
+                &quot;I take insulin daily&quot;? We detect both explicit identifiers and contextual personal information
+                that can identify someone indirectly.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Pipeline */}
         <div id="architecture" className="py-14 border-b border-border">
           <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-widest mb-6">
@@ -320,37 +351,6 @@ export default function Home() {
           <p className="text-[11px] font-mono text-muted-foreground">
             Also relevant for teams working under CCPA, SOC 2, ISO 27001, and PCI-DSS requirements.
           </p>
-        </div>
-
-        {/* Why This Matters */}
-        <div className="py-14 border-b border-border">
-          <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-widest mb-8">
-            Why this matters now
-          </p>
-          <div className="grid md:grid-cols-3 gap-0 border border-border">
-            <div className="p-6 border-b md:border-b-0 md:border-r border-border">
-              <h3 className="text-sm font-semibold mb-2">Too many AI models</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Claude, GPT, Gemini, Mistral, Llama — new models launch every week. You want to test them all.
-                But every model means another company seeing your data. PrivacyLayer lets you try any model safely.
-              </p>
-            </div>
-            <div className="p-6 border-b md:border-b-0 md:border-r border-border">
-              <h3 className="text-sm font-semibold mb-2">Data sovereignty matters</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                European companies and citizens need to use AI — but can we trust US-based providers with our
-                health records, financial data, and personal information? PrivacyLayer means you don&apos;t have to trust anyone.
-              </p>
-            </div>
-            <div className="p-6">
-              <h3 className="text-sm font-semibold mb-2">Layers of privacy risk</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Some data is obvious — names and SSNs. But what about &quot;my brother lives in Zurich&quot; or
-                &quot;I take insulin daily&quot;? We detect both explicit identifiers and contextual personal information
-                that can identify someone indirectly.
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* SDK */}
