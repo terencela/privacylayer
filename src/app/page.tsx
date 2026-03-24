@@ -177,26 +177,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Trust Banner */}
-        <div className="py-10 border-b border-border">
-          <div className="border border-border bg-card p-5">
-            <div className="flex items-start gap-4">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 mt-0.5 text-accent">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-              <div>
-                <h3 className="text-sm font-semibold mb-1">How can you be sure your data stays private?</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  All scanning, redaction, and encryption happens in JavaScript running in your browser tab.
-                  Open your browser&apos;s Network tab — you will see zero outgoing requests with personal data.
-                  There is no backend that processes your documents. The source code is fully open on GitHub.
-                  This is not a promise — it is a technical guarantee you can verify yourself.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Before / After */}
         <div className="py-14 border-b border-border">
           <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-widest mb-8">
@@ -227,6 +207,26 @@ export default function Home() {
                 <span className="text-accent">AHV: [AHV_01]</span><br />
                 <span className="text-accent">IBAN: [IBAN_01]</span><br />
                 <span className="text-accent">→ AI responds → real values restored</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Trust Banner */}
+        <div className="py-10 border-b border-border">
+          <div className="border border-border bg-card p-5">
+            <div className="flex items-start gap-4">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="shrink-0 mt-0.5 text-accent">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              <div>
+                <h3 className="text-sm font-semibold mb-1">How can you be sure your data stays private?</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  All scanning, redaction, and encryption happens in JavaScript running in your browser tab.
+                  Open your browser&apos;s Network tab — you will see zero outgoing requests with personal data.
+                  There is no backend that processes your documents. The source code is fully open on GitHub.
+                  This is not a promise — it is a technical guarantee you can verify yourself.
+                </p>
               </div>
             </div>
           </div>
