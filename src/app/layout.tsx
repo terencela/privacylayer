@@ -8,8 +8,21 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 
 export const metadata: Metadata = {
   title: "PrivacyLayer — Privacy Compliance for AI",
-  description:
-    "Detect, tokenize, and vault personal information before it reaches any AI model. Client-side. Zero leakage.",
+  description: "Detect, tokenize, and vault personal information before it reaches any AI model. Client-side. Zero leakage.",
+  keywords: ["privacy", "ai", "tokenization", "data-protection", "compliance"],
+  authors: [{ name: "PrivacyLayer" }],
+  openGraph: {
+    title: "PrivacyLayer — Privacy Compliance for AI",
+    description: "Detect, tokenize, and vault personal information before it reaches any AI model.",
+    type: "website",
+    url: "https://privacylayer.com",
+    siteName: "PrivacyLayer",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PrivacyLayer — Privacy Compliance for AI",
+    description: "Detect, tokenize, and vault personal information before it reaches any AI model.",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
