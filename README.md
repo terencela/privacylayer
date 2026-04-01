@@ -1,146 +1,131 @@
 # PrivacyLayer
 
-**Strip personal data from any document before it reaches AI.**
+**The privacy layer between your people and every AI on earth.**
 
-Names, addresses, bank details, health records -- detected and replaced with safe placeholders, right in your browser. The AI works on clean tokens. Real values are restored in the response. Zero data leaves your device. Ever.
-
-[Live Demo](https://privacylayer.vercel.app) · [Playground](https://privacylayer.vercel.app/playground) · [AI Chat Demo](https://privacylayer.vercel.app/playground/chat)
+Live: [privacylayer-main.vercel.app](https://privacylayer-main.vercel.app)
 
 ---
 
-## The Problem
+## The problem
 
-You paste a hospital invoice into ChatGPT. Your name, diagnosis, AHV number, and bank account land on a US server. Gone. Now multiply that across every AI model you want to test -- Claude, Gemini, Mistral, Llama. Every model = another company with your data.
+Every 10 days, a new AI model launches. Procurement approval takes 6 months.
 
-PrivacyLayer fixes this. The AI never sees your real data.
+So people test new tools with real documents. Patient records into ChatGPT. Client IBANs into Gemini. Salary data into Claude. This is Shadow AI — and it happens in every company, every day.
+
+Once that data reaches a US server, you have no control over it. Under Swiss nDSG, GDPR, and EU AI Act Article 10, this is not a grey area. It is a violation.
+
+There was no middle ground. Either you skip the AI tool, or you leak the data.
+
+**PrivacyLayer is the third option.**
 
 ---
 
-## How It Works
+## How it works
+
+1. Personal data is detected and replaced with safe tokens — `[NAME_01]`, `[IBAN_01]`, `[AHV_01]`
+2. The tokenized text is sent to any AI model
+3. The AI responds using tokens — never seeing real data
+4. PrivacyLayer restores real values locally, so you read a natural response
+
+**The AI model never sees a single real name, number, or address.**
+
+---
+
+## Two ways to use it
+
+### Chrome Extension (primary — works inside ChatGPT, Claude, Gemini, Perplexity)
+
+Install → open any supported AI → paste your document → click **Protect** → send.
+
+That's it. Zero workflow change. The extension intercepts the text before it reaches the AI.
 
 ```
-  Your document
-       |
-       v
-  ┌─ DETECT ──────────────────────────┐
-  │  50+ patterns scan in parallel    │
-  │  Names, AHV, IBAN, emails,        │
-  │  phones, addresses, DOB...        │
-  └────────────────────────────────────┘
-       |
-       v
-  ┌─ REPLACE ─────────────────────────┐
-  │  "Dr. Maria Bernasconi"           │
-  │       → [NAME_01]                 │
-  │  "CH93 0076 2011 6238 5295 7"     │
-  │       → [IBAN_01]                 │
-  └────────────────────────────────────┘
-       |
-       v
-  ┌─ VAULT ───────────────────────────┐
-  │  { NAME_01: "Dr. Maria..." }      │
-  │  AES-256 encrypted, browser only  │
-  └────────────────────────────────────┘
-       |
-       v
-  AI sees: "Patient [NAME_01], IBAN [IBAN_01]"
-  AI responds: "I recommend [NAME_01]..."
-       |
-       v
-  ┌─ RESTORE ─────────────────────────┐
-  │  [NAME_01] → "Dr. Maria..."      │
-  │  Find-and-replace from vault      │
-  └────────────────────────────────────┘
-       |
-       v
-  You read: "I recommend Dr. Maria Bernasconi..."
-  The AI never knew her name.
+extension/
+  inject.ts        — content script, injects Protect button into AI chat UIs
+  sites.ts         — per-site DOM selectors (ChatGPT, Claude, Gemini, Perplexity)
+  pii-engine.ts    — detection engine (ported from web app)
+  manifest.json    — Chrome Manifest V3
 ```
 
-Everything runs in JavaScript in your browser. Open your Network tab to verify -- zero personal data leaves your device.
+### Web Playground (full feature set — PDF, OCR, batch, vault)
+
+Upload PDFs, paste text, or photograph a physical letter. Download a redacted PDF. Export an encrypted vault key. Import it later to restore all original values.
+
+---
+
+## Detection engine
+
+Two-pass hybrid pipeline:
+
+**Pass 1 — Regex (instant, deterministic)**
+50+ patterns: AHV/AVS numbers, Swiss IBANs, phone numbers (+41 format), emails, dates of birth, credit cards, passports, tax IDs, addresses, patient IDs, IP addresses.
+
+**Pass 2 — BERT NER (AI, opt-in)**
+`Xenova/bert-base-multilingual-cased-ner-hrl` runs in your browser via WebAssembly.
+Catches names regex misses — plain names without titles, multilingual (DE/FR/IT/EN/TR/PL).
+500+ first-name dictionary for additional coverage. Zero server calls.
+
+**Generative risk summary**
+`LaMini-Flan-T5-77M` generates a human-readable risk assessment after scanning.
+Runs locally. Output: *"This document exposes 2 names and 1 AHV number — sufficient for identity theft and fraudulent tax filing."*
+
+```
+src/lib/
+  pii-engine.ts    — core detection, tokenization, vault, AES-256-GCM encryption
+  ner-engine.ts    — BERT NER wrapper (transformers.js, lazy-loaded, IndexedDB cached)
+  risk-summary.ts  — LaMini-Flan-T5 generative risk narrative
+```
 
 ---
 
 ## Architecture
 
 ```
-              ┌──────────────────────────────────────────┐
-              │            YOUR BROWSER                  │
-              │                                          │
-  Document ──>│  pii-engine.ts                           │
-              │  ├─ 50+ regex patterns (detect)          │
-              │  ├─ tokenizer (replace)                  │
-              │  ├─ AES-256 vault (encrypt)              │
-              │  └─ re-hydrator (restore)                │
-              │                                          │
-              │  pdf.js ─── PDF text extraction           │
-              │  Tesseract.js ─── image OCR              │
-              │  pdf-lib ─── redacted PDF output          │
-              │  Web Crypto API ─── AES-256-GCM          │
-              │                                          │
-              └──────────┬───────────────────────────────┘
-                         │ only [TOKEN_XX] placeholders
-                         v
-              ┌──────────────────────┐
-              │  Any AI model        │
-              │  Claude / GPT /      │
-              │  Gemini / Mistral    │
-              │  (sees zero real     │
-              │   personal data)     │
-              └──────────────────────┘
-```
-
-**Key design decision:** There is no server component that touches documents. The API routes (`/api/anonymize`, `/api/simulate-chat`) exist for the demo interface -- actual document processing is client-side JavaScript.
-
----
-
-## What We Detect
-
-| Type | Token | Example |
-|------|-------|---------|
-| Full name | `[NAME_01]` | Dr. Maria Bernasconi |
-| Email | `[EMAIL_01]` | maria@bluewin.ch |
-| Phone | `[PHONE_01]` | +41 79 345 67 89 |
-| AHV/AVS | `[AHV_01]` | 756.1234.5678.97 |
-| SSN | `[SSN_01]` | 123-45-6789 |
-| IBAN | `[IBAN_01]` | CH93 0076 2011 6238 5295 7 |
-| Credit card | `[CREDIT_CARD_01]` | 4532 1234 5678 9012 |
-| Address | `[ADDRESS_01]` | Bahnhofstrasse 42, 8001 Zurich |
-| Date of birth | `[DOB_01]` | 15.03.1987 |
-| Passport | `[PASSPORT_01]` | X12345678 |
-| Tax ID | `[TAX_ID_01]` | ZH-2025-449812 |
-| Patient ID | `[ID_01]` | SWICA-2024-88421 |
-| IP address | `[IP_01]` | 192.168.1.42 |
-
-Swiss-specific: AHV/AVS numbers, CH-prefix IBANs, +41 phone formats, German/French name patterns.
-
----
-
-## Try It
-
-**Just open the website -- no install needed:**
-
-- **Live demo:** [privacylayer.vercel.app](https://privacylayer.vercel.app)
-- **Playground:** [privacylayer.vercel.app/playground](https://privacylayer.vercel.app/playground)
-- **AI Chat Demo:** [privacylayer.vercel.app/playground/chat](https://privacylayer.vercel.app/playground/chat)
-
-### Run locally (optional)
-
-```bash
-git clone https://github.com/terencela/privacylayer.git
-cd privacylayer
-npm install
-npm run dev
+User document
+    │
+    ▼
+┌─────────────────────────────────────────────────────┐
+│  Browser (your device)                              │
+│                                                     │
+│  Regex engine  ──┐                                  │
+│                  ├──► Token vault (AES-256-GCM)    │
+│  BERT NER      ──┘         │                        │
+│                            ▼                        │
+│              Anonymized text ──► AI model           │
+│                                      │              │
+│              AI response ◄───────────┘              │
+│                    │                                │
+│              Restore real values                    │
+└─────────────────────────────────────────────────────┘
+         │
+         ▼
+  Zero personal data transmitted. Ever.
+  Open DevTools → Network tab → verify yourself.
 ```
 
 ---
 
-## Tech Stack
+## Why it matters
 
-Next.js 16 · TypeScript · Tailwind CSS · Web Crypto API (AES-256-GCM) · pdf.js · pdf-lib · Tesseract.js · Vercel
+- **Compliance today:** nDSG (Switzerland), GDPR (EU), EU AI Act Article 10
+- **Deployable today:** Install the Chrome extension. Any employee can use any AI tool — compliantly — without waiting for procurement
+- **No backend required:** Architecturally enforced. There is no server endpoint that receives personal data
+- **Multilingual:** German, French, Italian, English, Turkish, Polish, Scandinavian names detected out of the box
 
 ---
 
-## License
+## Tech stack
 
-MIT
+- Next.js + TypeScript + Tailwind CSS
+- Chrome Extension: Manifest V3, TypeScript, Vite
+- `@xenova/transformers` — BERT NER + Flan-T5 in browser (WebAssembly)
+- Web Crypto API — AES-256-GCM, PBKDF2 key derivation
+- `pdfjs-dist` — client-side PDF extraction
+- `tesseract.js` — browser-based OCR
+- Vercel (static + edge)
+
+---
+
+## Built at GenAI Zurich Hackathon 2026
+
+By Terence La — Head of AI, Zurich Airport

@@ -145,19 +145,19 @@ const PII_PATTERNS: PatternDef[] = [
   },
   {
     type: "NAME",
-    label: "Full Name",
+    label: "Full Name (title-prefixed)",
     patterns: [
-      /\b(?:Mr|Mrs|Ms|Dr|Prof|Herr|Frau|Monsieur|Madame)\.?[ \t]+[A-ZÄÖÜ][a-zäöüéèê]+(?:[ \t]+[A-ZÄÖÜ][a-zäöüéèê\-]+){1,3}\b/gm,
-      /\b(?:name|patient|kunde|client|versicherte[r]?)[ \t]*[:.][ \t]*([A-ZÄÖÜ][a-zäöüéèê]+(?:[ \t]+[A-ZÄÖÜ][a-zäöüéèê\-]+){1,3})\b/gi,
+      /\b(?:Mr|Mrs|Ms|Dr|Prof|Herr|Frau|Monsieur|Madame|Mme|Bay|Bayan|Pan|Pani)\.?[ \t]+[A-ZÄÖÜ][a-zäöüéèêàâşğıçöüÄÖÜ]+(?:[ \t]+[A-ZÄÖÜ][a-zäöüéèêàâşğıçöüÄÖÜ\-]+){1,3}\b/gm,
+      /\b(?:name|patient|kunde|client|versicherte[r]?|vorname|nachname|nom|prénom|nombre|isim)[ \t]*[:.][ \t]*([A-ZÄÖÜ][a-zäöüéèêàâşğıçöüÄÖÜ]+(?:[ \t]+[A-ZÄÖÜ][a-zäöüéèêàâşğıçöüÄÖÜ\-]+){1,3})\b/gi,
     ],
   },
 ];
 
 import { FIRST_NAMES, NAME_PARTICLES } from "./names-list";
 
-function detectNamesByList(text: string): PIIMatch[] {
+function detectNamesByList(text: string, existingVault?: Record<string, string>): PIIMatch[] {
   const results: PIIMatch[] = [];
-  const tokenRegex = /[A-ZÄÖÜa-zäöüéèêàâîïùûçæœ'-]+/g;
+  const tokenRegex = /[A-ZÄÖÜa-zäöüéèêàâîïùûçæœşğıçÄÖÜ'-]+/g;
   const tokens: { word: string; start: number; end: number }[] = [];
   let m;
   while ((m = tokenRegex.exec(text)) !== null) {
@@ -165,6 +165,13 @@ function detectNamesByList(text: string): PIIMatch[] {
   }
 
   let counter = 0;
+  if (existingVault) {
+    for (const token of Object.keys(existingVault)) {
+      const mx = token.match(/^\[NAME_(\d+)\]$/);
+      if (mx) { const n = parseInt(mx[1], 10); if (n > counter) counter = n; }
+    }
+  }
+
   let i = 0;
   while (i < tokens.length) {
     const { word, start } = tokens[i];
@@ -173,10 +180,9 @@ function detectNamesByList(text: string): PIIMatch[] {
       let j = i + 1;
       while (j < tokens.length) {
         const next = tokens[j];
-        // only extend if adjacent (gap <= 2 chars for a space)
         if (next.start - end > 2) break;
         const lower = next.word.toLowerCase();
-        if (NAME_PARTICLES.has(lower) || /^[A-ZÄÖÜ]/.test(next.word)) {
+        if (NAME_PARTICLES.has(lower) || /^[A-ZÄÖÜŞĞ]/.test(next.word)) {
           end = next.end;
           j++;
         } else {
@@ -184,8 +190,14 @@ function detectNamesByList(text: string): PIIMatch[] {
         }
       }
       const value = text.slice(start, end);
-      counter++;
-      const token = `[NAME_${String(counter).padStart(2, "0")}]`;
+      const existingTok = existingVault ? Object.entries(existingVault).find(([, v]) => v === value)?.[0] : undefined;
+      let token: string;
+      if (existingTok) {
+        token = existingTok;
+      } else {
+        counter++;
+        token = `[NAME_${String(counter).padStart(2, "0")}]`;
+      }
       results.push({ type: "NAME", value, token, start, end, risk: "high" });
       i = j;
     } else {
@@ -195,17 +207,33 @@ function detectNamesByList(text: string): PIIMatch[] {
   return results;
 }
 
-export function detectPII(text: string): PIIResult {
+export function detectPII(text: string, existingVault?: Record<string, string>): PIIResult {
   const matches: PIIMatch[] = [];
   const vault: Record<string, string> = {};
   const counters: Record<string, number> = {};
   const usedRanges: [number, number][] = [];
 
+  // Build reverse lookup: raw value → existing token (so same value reuses same token)
+  const valueToToken: Record<string, string> = {};
+  if (existingVault) {
+    for (const [token, value] of Object.entries(existingVault)) {
+      valueToToken[value] = token;
+      // Seed counters so new tokens don't collide with existing ones
+      const m = token.match(/^\[([A-Z_]+)_(\d+)\]$/);
+      if (m) {
+        const type = m[1];
+        const num = parseInt(m[2], 10);
+        if (!counters[type] || num > counters[type]) counters[type] = num;
+      }
+    }
+  }
+
   function overlaps(start: number, end: number): boolean {
     return usedRanges.some(([s, e]) => start < e && end > s);
   }
 
-  for (const nm of detectNamesByList(text)) {
+  // Dictionary-based name detection (handles plain names without titles, multilingual)
+  for (const nm of detectNamesByList(text, existingVault)) {
     if (overlaps(nm.start, nm.end)) continue;
     counters["NAME"] = (counters["NAME"] || 0) + 1;
     const token = `[NAME_${String(counters["NAME"]).padStart(2, "0")}]`;
@@ -226,8 +254,15 @@ export function detectPII(text: string): PIIResult {
         if (overlaps(start, end)) continue;
         if (value.length < 3) continue;
 
-        counters[patternDef.type] = (counters[patternDef.type] || 0) + 1;
-        const token = `[${patternDef.type}_${String(counters[patternDef.type]).padStart(2, "0")}]`;
+        // Reuse existing token if same value was already seen
+        const existingToken = valueToToken[value];
+        let token: string;
+        if (existingToken) {
+          token = existingToken;
+        } else {
+          counters[patternDef.type] = (counters[patternDef.type] || 0) + 1;
+          token = `[${patternDef.type}_${String(counters[patternDef.type]).padStart(2, "0")}]`;
+        }
 
         vault[token] = value;
         usedRanges.push([start, end]);
@@ -240,6 +275,32 @@ export function detectPII(text: string): PIIResult {
           end,
           risk: RISK_MAP[patternDef.type] || "medium",
         });
+      }
+    }
+  }
+
+  // Also catch standalone surnames/firstnames already in vault
+  if (existingVault) {
+    for (const [token, fullName] of Object.entries(existingVault)) {
+      try {
+        const parts = fullName.trim().split(/\s+/);
+        if (parts.length < 2) continue;
+        for (const part of parts) {
+          if (part.length < 3) continue;
+          // Escape special regex characters to avoid crashes
+          const escaped = part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const re = new RegExp(`\\b${escaped}\\b`, "g");
+          let m;
+          while ((m = re.exec(text)) !== null) {
+            if (!overlaps(m.index, m.index + part.length) && text.slice(m.index, m.index + part.length) === part) {
+              vault[token] = fullName;
+              usedRanges.push([m.index, m.index + part.length]);
+              matches.push({ type: "NAME", value: part, token, start: m.index, end: m.index + part.length, risk: "high" });
+            }
+          }
+        }
+      } catch {
+        // Skip malformed entries silently
       }
     }
   }
